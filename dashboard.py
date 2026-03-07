@@ -118,7 +118,7 @@ HTML = r"""<!DOCTYPE html>
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
   .lane-track {
-    flex: 1; position: relative; height: var(--row-h); overflow: hidden;
+    flex: 1; position: relative; height: var(--row-h); overflow-x: auto;
   }
   /* baseline rule */
   .lane-track::after {
