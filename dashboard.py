@@ -190,6 +190,10 @@ HTML = r"""<!DOCTYPE html>
       <div class="leg"><div class="leg-sw" style="background:var(--green)"></div>Completed</div>
       <div class="leg"><div class="leg-sw" style="background:var(--red)"></div>Failed</div>
       <div class="leg"><div class="leg-sw" style="background:var(--purple)"></div>Running</div>
+      <label class="leg" style="margin-left:auto;cursor:pointer;user-select:none">
+        <input type="checkbox" id="gap-toggle" style="accent-color:var(--accent)">
+        Show gaps
+      </label>
     </div>
     <div id="axis"></div>
     <div id="timeline"></div>
@@ -200,8 +204,16 @@ HTML = r"""<!DOCTYPE html>
 
 <script>
 let currentSession = null;
+let showGaps = false;
 // map session_id -> flat list of rows
 let sessionRows = {};
+
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('gap-toggle').addEventListener('change', function() {
+    showGaps = this.checked;
+    if (currentSession && sessionRows[currentSession]) renderTimeline(sessionRows[currentSession]);
+  });
+});
 
 // ── Formatting helpers ────────────────────────────────────────────────────────
 function fmt(sec) {
@@ -296,7 +308,7 @@ function showTt(e, row) {
 }
 function hideTt() { tt.style.display = 'none'; }
 
-// ── Timeline renderer (swim lanes, sequential X axis) ────────────────────────
+// ── Timeline renderer (swim lanes) ───────────────────────────────────────────
 function renderTimeline(rows) {
   const tlEl     = document.getElementById('timeline');
   const legendEl = document.getElementById('legend');
@@ -313,28 +325,40 @@ function renderTimeline(rows) {
   legendEl.style.display = 'flex';
 
   const N = rows.length;
-  // Slot width as a percentage of the track — each call gets 1/N of the space.
-  // A small gap between slots makes individual bars distinguishable.
-  const GAP_PCT = Math.min(0.3, 20 / N); // shrink gap when there are many calls
-  const slotW   = 100 / N;
-  const barW    = slotW - GAP_PCT;
+  let getPos, axHtml = '';
 
-  // For each row, assign a sequential rank by started_at order (already sorted).
-  // rank[i] = i since rows are sorted by started_at.
+  if (!showGaps) {
+    // ── Sequential mode: equal slot per call, no time gaps ──
+    const GAP_PCT = Math.min(0.3, 20 / N);
+    const slotW   = 100 / N;
+    const barW    = slotW - GAP_PCT;
+    getPos = (row, rank) => ({ left: rank * slotW + GAP_PCT / 2, width: barW });
 
-  // Max duration for proportional bar fill (unused for positioning but kept for future)
-  const maxDur = rows.reduce((m, r) => {
-    const d = r.ended_at ? r.ended_at - r.started_at : 0;
-    return Math.max(m, d);
-  }, 0.001);
+    const TICKS = N === 1 ? 1 : Math.min(N, 8);
+    for (let i = 0; i < TICKS; i++) {
+      const idx = N === 1 ? 0 : Math.round(i / (TICKS - 1) * (N - 1));
+      const pct = (idx / N) * 100 + slotW / 2;
+      axHtml += `<span class="ax-tick" style="left:${pct}%">${fmtAxisTs(rows[idx].started_at)}</span>`;
+    }
+  } else {
+    // ── Time-proportional mode: position by real timestamp ──
+    const tMin = rows[0].started_at;
+    const tMax = rows.reduce((m, r) => Math.max(m, r.ended_at || r.started_at), tMin);
+    const span = (tMax - tMin) || 1;
+    const minW = Math.max(0.4, 60 / (rows.length));  // min bar width in %
 
-  // Build axis: show timestamps at even intervals
-  const TICKS = Math.min(N, 8);
-  let axHtml = '';
-  for (let i = 0; i < TICKS; i++) {
-    const idx = Math.round(i / (TICKS - 1) * (N - 1));
-    const pct = (idx / N) * 100 + slotW / 2;
-    axHtml += `<span class="ax-tick" style="left:${pct}%">${fmtAxisTs(rows[idx].started_at)}</span>`;
+    getPos = (row, rank) => {
+      const left  = (row.started_at - tMin) / span * 100;
+      const durPct = row.ended_at ? (row.ended_at - row.started_at) / span * 100 : minW;
+      return { left, width: Math.max(minW, durPct) };
+    };
+
+    const TICKS = 6;
+    for (let i = 0; i < TICKS; i++) {
+      const pct = i / (TICKS - 1) * 100;
+      const ts  = tMin + i / (TICKS - 1) * span;
+      axHtml += `<span class="ax-tick" style="left:${pct}%">${fmtAxisTs(ts)}</span>`;
+    }
   }
   axisEl.innerHTML = axHtml;
 
@@ -352,7 +376,7 @@ function renderTimeline(rows) {
 
   tlEl.innerHTML = lanes.map(([toolName, entries]) => {
     const barsHtml = entries.map(({ row, rank }) => {
-      const left = rank * slotW + GAP_PCT / 2;
+      const { left, width } = getPos(row, rank);
 
       let segs = '';
       const callNum = rank + 1;
@@ -374,7 +398,7 @@ function renderTimeline(rows) {
       }
 
       return `<div class="tl-bar"
-        style="left:${left}%;width:${barW}%"
+        style="left:${left}%;width:${width}%"
         onmouseenter="showTt(event, sessionRows[currentSession][${rank}])"
         onmouseleave="hideTt()"
       >${segs}</div>`;
