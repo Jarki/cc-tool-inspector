@@ -14,7 +14,51 @@ document.addEventListener('DOMContentLoaded', () => {
     const item = e.target.closest('.session-item');
     if (item?.dataset.sessionId) selectSession(item.dataset.sessionId);
   });
+
+  // Sidebar collapse/expand
+  const sidebar = document.getElementById('sidebar');
+  if (localStorage.getItem('sidebar-collapsed') === '1') sidebar.classList.add('collapsed');
+  document.getElementById('sidebar-toggle').addEventListener('click', () => {
+    const collapsed = sidebar.classList.toggle('collapsed');
+    localStorage.setItem('sidebar-collapsed', collapsed ? '1' : '0');
+  });
 });
+
+// ── Session name generator ────────────────────────────────────────────────────
+// Derives a stable human-readable name from a session UUID (no server changes needed).
+const SESSION_ADJS = [
+  'amber','azure','bold','brave','calm','cobalt','crisp','deft','dry','dusty',
+  'early','eager','fair','fast','fern','flat','free','frosty','gold','green',
+  'grey','hardy','hazy','idle','inky','jade','keen','lazy','lean','lemon',
+  'light','lime','lofty','lunar','misty','mild','mint','neat','neon','noble',
+  'oaken','odd','olive','pale','pine','plain','polar','prime','proud','quick',
+  'quiet','rapid','red','regal','rosy','rough','royal','rusty','sandy','sharp',
+  'shy','silver','slim','slow','smoky','snowy','soft','solar','stark','steel',
+  'still','stone','stout','sunny','swift','tall','tame','tan','teal','thin',
+  'tidy','tiny','tired','torn','tough','true','turquoise','vivid','warm','wild',
+  'wiry','wispy','worn','young','zesty','zinc','iron','icy','grand','glad',
+];
+const SESSION_NOUNS = [
+  'albatross','ape','bear','beetle','bison','boar','bobcat','bullfrog','capybara',
+  'cheetah','clam','cobra','condor','coyote','crane','crow','deer','dingo','dove',
+  'duck','eagle','elk','emu','falcon','ferret','finch','flamingo','fox','gecko',
+  'gnu','goat','goose','gopher','gorilla','hawk','heron','hippo','horse','hyena',
+  'ibis','iguana','jackal','jaguar','jay','kite','koala','lemur','leopard','lion',
+  'lizard','llama','lynx','magpie','mink','mole','moose','moth','mule','newt',
+  'okapi','osprey','otter','owl','panda','parrot','pelican','penguin','pike',
+  'porcupine','puma','python','quail','rabbit','raven','rhino','robin','salmon',
+  'seal','shark','skunk','sloth','snail','sparrow','spider','stork','swan','tapir',
+  'tiger','toad','toucan','trout','turtle','viper','vole','vulture','walrus',
+  'weasel','wolf','wombat','woodpecker','wren','yak','zebra',
+];
+function sessionName(uuid) {
+  // Hash the first 16 hex chars into two independent 32-bit numbers
+  const h1 = parseInt(uuid.replace(/-/g,'').slice(0, 8), 16) >>> 0;
+  const h2 = parseInt(uuid.replace(/-/g,'').slice(8,16), 16) >>> 0;
+  const adj  = SESSION_ADJS [h1 % SESSION_ADJS.length];
+  const noun = SESSION_NOUNS[h2 % SESSION_NOUNS.length];
+  return `${adj}-${noun}`;
+}
 
 // ── Formatting helpers ────────────────────────────────────────────────────────
 function fmt(sec) {
@@ -367,7 +411,7 @@ function renderSessions(sessions) {
     const cwd  = (s.cwd || '').replace(/.*\/([^/]+\/[^/]+)$/, '…/$1');
     return `<div class="session-item ${s.session_id === currentSession ? 'active' : ''}"
          data-session-id="${esc(s.session_id)}">
-      <div class="s-id">${esc(s.session_id.slice(0,8))}…</div>
+      <div class="s-id" title="${esc(s.session_id)}">${esc(sessionName(s.session_id))}</div>
       <div class="s-meta">
         <span>${date} ${time}</span>
         ${s.successes  ? `<span class="pill pill-g">${s.successes} ok</span>` : ''}
@@ -381,12 +425,12 @@ function renderSessions(sessions) {
 
 function updateHeader(rows, sid) {
   const el = document.getElementById('session-title');
-  if (!rows?.length) { el.innerHTML = `Session <span>${sid.slice(0,8)}…</span>`; return; }
+  if (!rows?.length) { el.innerHTML = `Session <span>${esc(sessionName(sid))}</span>`; return; }
   const dur = rows.at(-1).ended_at ? rows.at(-1).ended_at - rows[0].started_at : null;
   const ok  = rows.filter(r => r.success === 1).length;
   const err = rows.filter(r => r.success === 0).length;
   const run = rows.filter(r => r.ended_at == null).length;
-  el.innerHTML = `Session <span>${sid.slice(0,8)}…</span>
+  el.innerHTML = `Session <span>${esc(sessionName(sid))}</span>
     <span class="chip"><b>${rows.length}</b> calls</span>
     ${ok  ? `<span class="chip" style="color:var(--green)"><b>${ok}</b> ok</span>` : ''}
     ${err ? `<span class="chip" style="color:var(--red)"><b>${err}</b> failed</span>` : ''}
