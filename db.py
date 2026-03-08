@@ -6,7 +6,10 @@ import json
 import os
 import sqlite3
 
-DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "tool_tracker.db")
+DB_PATH = os.environ.get(
+    "TRACKER_DB",
+    os.path.join(os.path.expanduser("~"), ".claude", "tool_tracker.db")
+)
 
 # Truncate large responses to keep the DB manageable.
 TOOL_RESPONSE_MAX = 8_000  # characters
