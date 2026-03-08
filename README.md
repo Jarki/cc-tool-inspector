@@ -1,49 +1,30 @@
 # tooltracker
 
-Tracks every Claude Code tool call and shows them in a local web dashboard.
+A Claude Code plugin that records every tool call your AI session makes and displays them in a local web dashboard. See exactly which files were read, what shell commands ran, how long each tool took, when permission prompts appeared, and what failed — across all your sessions, in real time.
 
-## How it works
+Data stays entirely local: a single SQLite file, no external services, no third-party dependencies.
 
-`track.py` is a hook script that Claude Code calls before and after every tool use. It writes to a SQLite database. `dashboard.py` is a small stdlib HTTP server that reads from that database and serves a timeline UI.
+## Install
 
-## Setup
-
-### 1. Register the hooks
-
-Add the following to `~/.claude/settings.json` under the top-level `"hooks"` key:
-
-```json
-"hooks": {
-  "PreToolUse": [{
-    "matcher": "",
-    "hooks": [{ "type": "command", "command": "python3 /path/to/tooltracker/track.py", "timeout": 5, "async": true }]
-  }],
-  "PermissionRequest": [{
-    "matcher": "",
-    "hooks": [{ "type": "command", "command": "python3 /path/to/tooltracker/track.py", "timeout": 5, "async": true }]
-  }],
-  "PostToolUse": [{
-    "matcher": "",
-    "hooks": [{ "type": "command", "command": "python3 /path/to/tooltracker/track.py", "timeout": 5, "async": true }]
-  }],
-  "PostToolUseFailure": [{
-    "matcher": "",
-    "hooks": [{ "type": "command", "command": "python3 /path/to/tooltracker/track.py", "timeout": 5, "async": true }]
-  }]
-}
+```sh
+claude plugin add /path/to/tooltracker
 ```
 
-Replace `/path/to/tooltracker/` with the actual directory. No need to restart Claude Code — hooks are picked up immediately.
+The plugin registers all hooks automatically. Once installed, every Claude Code session is tracked without any further setup.
 
-### 2. Start the dashboard
+## Start the dashboard
+
+```sh
+/dashboard
+```
+
+Or run it directly:
 
 ```sh
 python3 /path/to/tooltracker/dashboard.py
 ```
 
-Then open http://localhost:7337.
-
-The dashboard auto-refreshes every 3 seconds. No browser extension or external dependency needed — stdlib only.
+Then open http://localhost:7337. The dashboard auto-refreshes every 3 seconds.
 
 ## Configuration
 
@@ -58,7 +39,7 @@ TRACKER_HOST=0.0.0.0 python3 dashboard.py   # expose on the local network
 
 ## Dashboard
 
-The left sidebar lists recent sessions (most recent first). Click one to load its timeline.
+The left sidebar lists recent sessions (most recent first), each labelled with a human-readable name derived from its UUID (e.g. *amber-albatross*). The first line of the session's initial user prompt is shown below the name. Click a session to load its timeline. The sidebar can be collapsed with the toggle button; the state is remembered across page loads.
 
 **Timeline** shows each tool as a swim lane. Bars are colour-coded:
 
@@ -73,11 +54,17 @@ Hover any bar for full details: timestamps, duration, tool input, response, erro
 
 Toggle **Show gaps** to switch between a compact sequential view and a time-proportional layout that shows real pauses between calls.
 
-**Stats panels** appear below the timeline for sessions that used file or shell tools:
+**Bash timeline** appears below the main timeline when the session contains Bash calls. It shows every shell command as its own swim lane, grouped and colour-coded the same way as the main timeline.
+
+**Stats panels** appear below for sessions that used file or shell tools:
 
 - **File access** — which files were Read / Written / Edited, and how many times each
 - **Bash — most called** — commands ranked by call count, with avg and max duration
 - **Bash — slowest** — same data ranked by worst-case duration
+
+## How it works
+
+`track.py` is a hook script that Claude Code calls before and after every tool use. It writes to a SQLite database. `dashboard.py` is a small stdlib HTTP server that reads from that database and serves a timeline UI.
 
 ## Files
 
