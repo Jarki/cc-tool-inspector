@@ -1,0 +1,16 @@
+{
+  "name": "tooltracker",
+  "version": "0.1.0",
+  "description": "Tracks every Claude Code tool call and displays them in a local web dashboard with timeline and stats.",
+  "author": {
+    "name": "jarki"
+  },
+  "license": "MIT",
+  "keywords": [
+    "tracking",
+    "hooks",
+    "dashboard",
+    "sqlite",
+    "tool-use"
+  ]
+}

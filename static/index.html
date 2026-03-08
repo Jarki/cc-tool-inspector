@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Claude Tool Tracker</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+
+<div id="sidebar">
+  <div id="sidebar-header">
+    <h1>Sessions</h1>
+    <div class="live-dot" title="auto-refreshing"></div>
+  </div>
+  <div id="session-list"></div>
+</div>
+
+<div id="main">
+  <div id="main-header">
+    <div id="session-title">Select a session</div>
+  </div>
+  <div id="tl-wrap">
+    <div id="empty">← Pick a session</div>
+    <div id="legend" style="display:none">
+      <span style="color:var(--muted);font-size:11px">Legend:</span>
+      <div class="leg"><div class="leg-sw" style="background:var(--yellow)"></div>Perm wait</div>
+      <div class="leg"><div class="leg-sw" style="background:var(--accent)"></div>Exec after perm</div>
+      <div class="leg"><div class="leg-sw" style="background:var(--green)"></div>Completed</div>
+      <div class="leg"><div class="leg-sw" style="background:var(--red)"></div>Failed</div>
+      <div class="leg"><div class="leg-sw" style="background:var(--purple)"></div>Running</div>
+      <label class="leg" style="margin-left:auto;cursor:pointer;user-select:none">
+        <input type="checkbox" id="gap-toggle" style="accent-color:var(--accent)" checked>
+        Scale Time
+      </label>
+    </div>
+    <div id="axis"></div>
+    <div id="timeline"></div>
+    <details id="bash-tl-section" open>
+      <summary id="bash-tl-header">
+        <span>Bash timeline</span>
+        <span id="bash-tl-count" class="chip"></span>
+      </summary>
+      <div id="bash-axis"></div>
+      <div id="bash-timeline"></div>
+    </details>
+    <div id="stats"></div>
+  </div>
+</div>
+
+<div id="tt"></div>
+
+<script src="/app.js"></script>
+</body>
+</html>
