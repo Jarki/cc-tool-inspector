@@ -419,13 +419,20 @@ function renderSessions(sessions) {
         ${s.in_progress? `<span class="pill pill-y">${s.in_progress} …</span>` : ''}
       </div>
       <div class="s-cwd" title="${esc(s.cwd || '')}">${esc(cwd)}</div>
+      ${s.initial_prompt ? `<div class="s-prompt" title="${esc(s.initial_prompt)}">${esc(s.initial_prompt.split('\n')[0].slice(0, 80))}</div>` : ''}
     </div>`;
   }).join('');
 }
 
-function updateHeader(rows, sid) {
+function updateHeader(rows, sid, prompt) {
   const el = document.getElementById('session-title');
-  if (!rows?.length) { el.innerHTML = `Session <span>${esc(sessionName(sid))}</span>`; return; }
+  const promptHtml = prompt
+    ? `<div class="session-prompt" title="${esc(prompt)}">${esc(prompt.split('\n')[0].slice(0, 120))}</div>`
+    : '';
+  if (!rows?.length) {
+    el.innerHTML = `Session <span>${esc(sessionName(sid))}</span>${promptHtml}`;
+    return;
+  }
   const dur = rows.at(-1).ended_at ? rows.at(-1).ended_at - rows[0].started_at : null;
   const ok  = rows.filter(r => r.success === 1).length;
   const err = rows.filter(r => r.success === 0).length;
@@ -435,7 +442,8 @@ function updateHeader(rows, sid) {
     ${ok  ? `<span class="chip" style="color:var(--green)"><b>${ok}</b> ok</span>` : ''}
     ${err ? `<span class="chip" style="color:var(--red)"><b>${err}</b> failed</span>` : ''}
     ${run ? `<span class="chip" style="color:var(--yellow)"><b>${run}</b> running</span>` : ''}
-    ${dur != null ? `<span class="chip">span <b>${fmt(dur)}</b></span>` : ''}`;
+    ${dur != null ? `<span class="chip">span <b>${fmt(dur)}</b></span>` : ''}
+    ${promptHtml}`;
 }
 
 // ── Stats panels ──────────────────────────────────────────────────────────────
@@ -547,7 +555,8 @@ async function selectSession(id) {
     renderTimeline(rows);
     renderBashTimeline(rows);
     renderStats(rows);
-    updateHeader(rows, id);
+    const prompt = sessions.find(s => s.session_id === id)?.initial_prompt;
+    updateHeader(rows, id, prompt);
   } catch (err) {
     console.error('selectSession failed:', err);
   }
@@ -565,7 +574,8 @@ async function refresh() {
       renderTimeline(rows);
       renderBashTimeline(rows);
       renderStats(rows);
-      updateHeader(rows, currentSession);
+      const prompt = sessions.find(s => s.session_id === currentSession)?.initial_prompt;
+      updateHeader(rows, currentSession, prompt);
     }
   } catch (err) {
     console.error('refresh failed:', err);
