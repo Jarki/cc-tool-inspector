@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Claude Code tool usage tracker hook script.
-Handles: PreToolUse, PermissionRequest, PostToolUse, PostToolUseFailure
+Handles: UserPromptSubmit, PreToolUse, PermissionRequest, PostToolUse, PostToolUseFailure
 """
 import sys
 import json
@@ -27,7 +27,14 @@ def main():
     with sqlite3.connect(DB_PATH) as conn:
         init_db(conn)
 
-        if event == "PreToolUse":
+        if event == "UserPromptSubmit":
+            prompt = data.get("prompt", "")
+            conn.execute(
+                "INSERT OR IGNORE INTO sessions (session_id, initial_prompt, created_at) VALUES (?, ?, ?)",
+                (session_id, prompt, now),
+            )
+
+        elif event == "PreToolUse":
             conn.execute(
                 """INSERT INTO tool_uses
                    (tool_use_id, session_id, agent_type, tool_name, cwd, tool_input, started_at)

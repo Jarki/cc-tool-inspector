@@ -33,6 +33,7 @@ body { background: var(--bg); color: var(--text); font-family: ui-monospace,"SF 
 .s-id { color: var(--accent); font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .s-meta { color: var(--muted); font-size: 11px; margin-top: 2px; display: flex; gap: 6px; flex-wrap: wrap; }
 .s-cwd { color: var(--muted); font-size: 10px; margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.s-prompt { color: var(--fg); font-size: 10px; margin-top: 3px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; opacity: .7; font-style: italic; }
 .pill { padding: 1px 5px; border-radius: 3px; font-size: 10px; font-weight: 600; }
 .pill-g { background:#1a3a1e; color:var(--green); }
 .pill-r { background:#3a1a1a; color:var(--red); }
@@ -43,6 +44,7 @@ body { background: var(--bg); color: var(--text); font-family: ui-monospace,"SF 
 #main-header { padding: 10px 18px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; flex-wrap: wrap; min-height: 42px; }
 #session-title { font-size: 12px; font-weight: 600; color: var(--muted); }
 #session-title span { color: var(--accent); }
+.session-prompt { font-size: 11px; font-style: italic; color: var(--fg); opacity: .6; margin-top: 3px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .chip { background: var(--surface2); border: 1px solid var(--border); border-radius: 4px; padding: 1px 7px; font-size: 11px; color: var(--muted); }
 .chip b { color: var(--text); }
 

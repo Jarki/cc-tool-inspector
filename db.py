@@ -15,6 +15,13 @@ TOOL_RESPONSE_MAX = 8_000  # characters
 def init_db(conn):
     conn.execute("PRAGMA journal_mode=WAL")
     conn.execute("""
+        CREATE TABLE IF NOT EXISTS sessions (
+            session_id TEXT PRIMARY KEY,
+            initial_prompt TEXT,
+            created_at REAL
+        )
+    """)
+    conn.execute("""
         CREATE TABLE IF NOT EXISTS tool_uses (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             tool_use_id TEXT,
